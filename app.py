@@ -99,7 +99,7 @@ models, tokenizers, model_names = load_models()
 st.sidebar.subheader("Task Selection")
 task_selected = st.sidebar.radio(
     "Choose a task:",
-    ["Sentiment Analysis", "News Topic Categorization"]
+    ["Sentiment Analysis", "News Topic Categorization", "Natural Language Inference(NLI)"]
 )
 
 # 根据任务显示对应的模型选择和输入框
