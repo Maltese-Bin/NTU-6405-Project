@@ -280,10 +280,18 @@ st.markdown("""
 *(Sorted by first letter of surname)*  
 """, unsafe_allow_html=True)
 
-col1, col2 = st.columns([1, 3])  # 左列宽度 1，右列宽度 3
+st.markdown(
+    """
+    <div style="display: flex; align-items: center;">
+        <img src="assets/pingu6.jpg" width="150" style="margin-right: 10px;">
+        <span>Thank you for using~</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
+col1, col2 = st.columns([1, 1])  # 两列宽度相等
 with col1:
     st.image("assets/pingu6.jpg", width=150)
-
 with col2:
     st.write("Thank you for using~")
