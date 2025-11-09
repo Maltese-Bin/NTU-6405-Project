@@ -14,8 +14,14 @@ st.write("Please select a model, enter text, and view the prediction results and
 MODEL_PATHS = {
     "BERT_SentimentAnalysis": {"path": "model/bert_base_sentiment", "num_labels": 2},
     # "ROBERTA_SentimentAnalysis": {"path": "model/roberta_base_sentiment", "num_labels": 2},
-    # "BERT_News": {"path": "model/bert_news", "num_labels": 4},
+    "BERT_News": {"path": "model/bert_news", "num_labels": 4},
     # "ROBERTA_News": {"path": "model/roberta_news", "num_labels": 4},
+}
+
+MODEL_PATHS = {
+    "BERT_SentimentAnalysis": {"path": "model/bert_base_sentiment", "num_labels": 2, "adapter": True},
+    "ROBERTA_SentimentAnalysis": {"path": "model/roberta_base_sentiment", "num_labels": 2, "adapter": True},
+    "BERT_News": {"path": "model/bert_news", "num_labels": 4, "adapter": False},
 }
 
 @st.cache_resource
@@ -23,24 +29,31 @@ def load_models():
     models = {}
     tokenizers = {}
     for name, info in MODEL_PATHS.items():
-        adapter_path = info["path"]
+        path = info["path"]
         num_labels = info["num_labels"]
+        use_adapter = info["adapter"]
 
-        # 根据模型名选择基座
-        if "BERT" in name:
+        if "BERT" in name and use_adapter:
             base_model_name = "bert-base-uncased"
-        elif "ROBERTA" in name:
+        elif "ROBERTA" in name and use_adapter:
             base_model_name = "facebook/roberta-base"
 
-        # 加载基座模型 + Adapter
-        base_model = AutoModelForSequenceClassification.from_pretrained(
-            base_model_name, num_labels=num_labels
-        )
-        model = PeftModel.from_pretrained(base_model, adapter_path, is_trainable=False)
-        model.eval()  # 推理模式
+        if use_adapter:
+            # 加载 Adapter 模型
+            base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=num_labels)
+            model = PeftModel.from_pretrained(base_model, path, is_trainable=False)
+        else:
+            # 加载完整微调模型
+            model = AutoModelForSequenceClassification.from_pretrained(path, num_labels=num_labels)
 
+        model.eval()
         models[name] = model
-        tokenizers[name] = AutoTokenizer.from_pretrained(base_model_name)
+
+        # Tokenizer
+        if use_adapter:
+            tokenizers[name] = AutoTokenizer.from_pretrained(base_model_name)
+        else:
+            tokenizers[name] = AutoTokenizer.from_pretrained(path)
 
     return models, tokenizers, MODEL_PATHS
 
@@ -99,7 +112,7 @@ if submit:
         st.image(conf_matrix_img, use_column_width=True)
 
     # 新闻分类预测
-    if news_input and news_model_selected:
+    elif news_input and news_model_selected:
         model = models["BERT_News"] if news_model_selected == "BERT" else models["ROBERTA_News"]
         tokenizer = tokenizers["BERT_News"] if news_model_selected == "BERT" else tokenizers["ROBERTA_News"]
         model_name = "BERT_AGNews" if sentiment_model_selected == "BERT" else "ROBERTA_AGNews"
