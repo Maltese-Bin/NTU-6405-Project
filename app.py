@@ -13,9 +13,9 @@ st.write("Please select a model, enter text, and view the prediction results and
 
 MODEL_PATHS = {
     "BERT_SentimentAnalysis": {"path": "model/bert_base_sentiment", "num_labels": 2},
-    "ROBERTA_SentimentAnalysis": {"path": "model/roberta_base_sentiment", "num_labels": 2},
-    "BERT_News": {"path": "model/bert_news", "num_labels": 4},
-    "ROBERTA_News": {"path": "model/roberta_news", "num_labels": 4},
+    # "ROBERTA_SentimentAnalysis": {"path": "model/roberta_base_sentiment", "num_labels": 2},
+    # "BERT_News": {"path": "model/bert_news", "num_labels": 4},
+    # "ROBERTA_News": {"path": "model/roberta_news", "num_labels": 4},
 }
 
 @st.cache_resource
