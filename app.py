@@ -20,7 +20,6 @@ st.image("assets/pingu1.jpg", width=150)
 st.markdown("""
 ### Hi! Welcome to Group 16's EE6405 Project!
 > ⚡ **Please select a scene in the sidebar, and then select a model.**
-
 > **Let's enter text, view the prediction results and the model's training performance metrics!**
 """, unsafe_allow_html=True)
 
