@@ -65,7 +65,7 @@ if submit and user_input:
 
     # 显示结果（根据你的任务类型调整，如情感分析返回正面/负面）
     st.subheader("预测结果")
-    result_map = {0: "负面", 1: "中性", 2: "正面"}
+    result_map = {0: "负面", 1: "正面"}
     st.success(f"模型预测: {result_map[predictions]}")
 
     # 显示模型性能图表（混淆矩阵等）
