@@ -3,7 +3,7 @@ import torch
 from sympy.physics.control.control_plots import plt
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from PIL import Image
-
+from peft import PeftModel
 
 st.set_page_config(
     page_title="6405 Group 16 Project",
@@ -17,15 +17,19 @@ MODEL_PATHS = {
     "BERT_SentimentAnalysis": "model/bert_base_sentiment",
 }
 
+BASE_MODEL = "google-bert/bert-base-uncased"
 
 # 加载模型函数（缓存，避免重复加载）
 @st.cache_resource
 def load_models():
     models = {}
     tokenizers = {}
-    for name, path in MODEL_PATHS.items():
-        models[name] = AutoModelForSequenceClassification.from_pretrained(path)
-        tokenizers[name] = AutoTokenizer.from_pretrained(path)
+    for name, adapter_path in MODEL_PATHS.items():
+        base_model = AutoModelForSequenceClassification.from_pretrained(BASE_MODEL, num_labels=3)
+        model = PeftModel.from_pretrained(base_model, adapter_path)
+
+        models[name] = model
+        tokenizers[name] = AutoTokenizer.from_pretrained(BASE_MODEL)
     return models, tokenizers, MODEL_PATHS
 
 
@@ -60,14 +64,12 @@ if submit and user_input:
 
     # 显示结果（根据你的任务类型调整，如情感分析返回正面/负面）
     st.subheader("预测结果")
-    result_map = {0: "负面", 1: "中性", 2: "正面"}  # 替换为你的标签映射
+    result_map = {0: "负面", 1: "中性", 2: "正面"}
     st.success(f"模型预测: {result_map[predictions]}")
 
-    # --------------------------
     # 显示模型性能图表（混淆矩阵等）
-    # --------------------------
     st.subheader("模型性能分析")
-    col1, col2 = st.columns(2)  # 分两列显示
+    col1, col2 = st.columns(2)
 
     with col1:
         st.write(f"{selected_model} 混淆矩阵")
