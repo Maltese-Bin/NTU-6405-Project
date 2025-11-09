@@ -14,8 +14,6 @@ st.set_page_config(
 )
 st.title("🤖 6405 Group 16: Online Prediction Platform for BERT and its Variant Models")
 
-import streamlit as st
-
 st.image("assets/pingu1.jpg", width=150)
 
 
@@ -281,4 +279,11 @@ st.markdown("""
 
 *(Sorted by first letter of surname)*  
 """, unsafe_allow_html=True)
-st.image("assets/pingu6.jpg", width=150)
+
+col1, col2 = st.columns([1, 3])  # 左列宽度 1，右列宽度 3
+
+with col1:
+    st.image("assets/pingu6.jpg", width=150)
+
+with col2:
+    st.write("Thank you for using~")
