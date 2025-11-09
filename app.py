@@ -108,7 +108,7 @@ if task_selected == "Sentiment Analysis":
 
     # 模型选择
     model_options = ["BERT", "ROBERTA"]
-    model_selected = st.selectbox("Select Sentiment Model:", model_options)
+    model_selected = st.selectbox("Select Model:", model_options)
 
     # 文本输入
     user_input = st.text_area(
@@ -123,7 +123,7 @@ elif task_selected == "News Topic Categorization":
 
     # 模型选择
     model_options = ["BERT", "ROBERTA"]
-    model_selected = st.selectbox("Select News Model:", model_options)
+    model_selected = st.selectbox("Select Model:", model_options)
 
     # 文本输入
     user_input = st.text_area(
@@ -133,42 +133,97 @@ elif task_selected == "News Topic Categorization":
         key="news_input"
     )
 
+elif task_selected == "Natural Language Inference(NLI)":
+    st.subheader("Natural Language Inference (NLI)")
+
+    # 模型选择
+    model_options = ["BERT", "ROBERTA"]
+    model_selected = st.selectbox("Select Model:", model_options)
+
+    # NLI 任务需要两个输入句子
+    premise = st.text_area(
+        "Premise:",
+        value="",
+        placeholder="Enter the first sentence (Premise)",
+        key="premise_input"
+    )
+
+    hypothesis = st.text_area(
+        "Hypothesis:",
+        value="",
+        placeholder="Enter the second sentence (Hypothesis)",
+        key="hypothesis_input"
+    )
+
 # 统一预测按钮
 submit = st.button("Start Prediction")
 
-if submit and user_input:
-    # 根据选择加载模型
+if submit:
+    # 先根据任务准备 model_key、tokenizer、model、inputs、result_map
     if task_selected == "Sentiment Analysis":
+        if not user_input:
+            st.warning("⚠️ Please enter text for Sentiment Analysis.")
+            st.stop()
         model_key = "BERT_SentimentAnalysis" if model_selected == "BERT" else "ROBERTA_SentimentAnalysis"
         result_map = {0: "Negative", 1: "Positive"}
-    else:  # News
+        tokenizer = tokenizers[model_key]
+        model = models[model_key]
+        inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
+
+    elif task_selected == "News Topic Categorization":
+        if not user_input:
+            st.warning("⚠️ Please enter text for News Topic Categorization.")
+            st.stop()
         model_key = "BERT_News" if model_selected == "BERT" else "ROBERTA_News"
         result_map = {0: "World", 1: "Sports", 2: "Business", 3: "Sci/Tech"}
+        tokenizer = tokenizers[model_key]
+        model = models[model_key]
+        inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
 
-    model = models[model_key]
-    tokenizer = tokenizers[model_key]
-    model_name = model_key
+    elif task_selected == "Natural Language Inference(NLI)":
+        # NLI uses premise + hypothesis
+        try:
+            premise  # ensure variable exists in namespace
+            hypothesis
+        except NameError:
+            st.warning("⚠️ Please provide both premise and hypothesis for NLI.")
+            st.stop()
 
-    # 预测
-    inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
+        if not premise or not hypothesis:
+            st.warning("⚠️ Please enter both Premise and Hypothesis for NLI.")
+            st.stop()
+
+        model_key = "BERT_NLI" if model_selected == "BERT" else "ROBERTA_NLI"
+        result_map = {0: "Entailment", 1: "Contradiction", 2: "Neutral"}
+        tokenizer = tokenizers[model_key]
+        model = models[model_key]
+        inputs = tokenizer(premise, hypothesis, return_tensors="pt", truncation=True, padding=True)
+
+    else:
+        st.warning("⚠️ Unknown task selected.")
+        st.stop()
+
+    # 推理（确保 model 和 inputs 都已定义）
+    model.eval()
     with torch.no_grad():
         outputs = model(**inputs)
         predictions = torch.argmax(outputs.logits, dim=1).item()
 
-    # 显示结果
+    # 展示结果
     st.subheader("Prediction Result")
-    st.success(f"{model_selected} Prediction: {result_map[predictions]}")
+    st.success(f"**{model_selected} Prediction:** {result_map[predictions]}")
+
+  #-----------------------------------------------------------------------------------
 
     # 显示混淆矩阵
     st.subheader(f"{model_selected} Evaluation Results")
-
 
     #  混淆矩阵单独一行
     conf_matrix_img_path = f"metrics/confusion_{model_name}.png"
     if os.path.exists(conf_matrix_img_path):
         st.markdown("**Confusion Matrix:**")
         conf_matrix_img = load_confusion_matrix(model_name)
-        st.image(conf_matrix_img, use_column_width=True)
+        st.image(conf_matrix_img, width = 450)
 
     #  训练指标和分类报告并排展示
     cols = st.columns(2)
@@ -201,7 +256,7 @@ st.markdown("""
 
 **Deployed using @Streamlit**.  
 
-**Authors:NTU EEE 6405 Group 16:**  
+**Authors: NTU EEE 6405 Group 16**  
 - Zeng Jiabo  
 - Fu Wanting  
 - Hou Xinyu 
