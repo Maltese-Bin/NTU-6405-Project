@@ -14,11 +14,11 @@ st.set_page_config(
 )
 st.title("🤖 6405 Group 16: Online Prediction Platform for BERT and its Variant Models")
 
-st.image("assets/pingu.gif", width=100)
+st.image("assets/cat1.gif", width=100)
 
 st.markdown("""
 ### Hi! Welcome to Group 16's EE6405 Project**!
-##### ⚡ **Please select a scene in the sidebar, and then select a model.
+##### ⚡ **Please select a scene in the sidebar, and then select a model.**
 
 **Enter text, view the prediction results and the model's training performance metrics**
 """, unsafe_allow_html=True)
