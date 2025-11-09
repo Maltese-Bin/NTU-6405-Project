@@ -79,69 +79,69 @@ def load_confusion_matrix(model_name):
 models, tokenizers, model_names = load_models()
 
 # 用户输入与模型选择
-with st.sidebar:  # 侧边栏放输入控件
+st.sidebar.subheader("Task Selection")
+task_selected = st.sidebar.radio(
+    "Choose a task:",
+    ["Sentiment Analysis", "News Topic Categorization"]
+)
+
+# 根据任务显示对应的模型选择和输入框
+if task_selected == "Sentiment Analysis":
     st.subheader("Sentiment Analysis")
-    sentiment_models = ["BERT", "ROBERTA"]
-    sentiment_model_selected = st.selectbox("Select Sentiment Model:", sentiment_models)
-    sentiment_input = st.text_area(
+
+    # 模型选择
+    model_options = ["BERT", "ROBERTA"]
+    model_selected = st.selectbox("Select Sentiment Model:", model_options)
+
+    # 文本输入
+    user_input = st.text_area(
         "Enter text for sentiment analysis:",
         "Please enter a sentence with emotional connotations."
     )
 
+elif task_selected == "News Topic Categorization":
     st.subheader("News Topic Categorization")
-    news_models = ["BERT", "ROBERTA"]
-    news_model_selected = st.selectbox("Select News Model:", news_models)
-    news_input = st.text_area(
+
+    # 模型选择
+    model_options = ["BERT", "ROBERTA"]
+    model_selected = st.selectbox("Select News Model:", model_options)
+
+    # 文本输入
+    user_input = st.text_area(
         "Enter text for news topic categorization:",
         "Please enter a sentence belonging to 'World', 'Sports', 'Business', or 'Sci/Tech'."
     )
 
+# 统一预测按钮
+submit = st.button("Start Prediction")
 
-    submit = st.button("Start Predicting")
+if submit and user_input:
+    # 根据选择加载模型
+    if task_selected == "Sentiment Analysis":
+        model_key = "BERT_SentimentAnalysis" if model_selected == "BERT" else "ROBERTA_SentimentAnalysis"
+        result_map = {0: "Negative", 1: "Positive"}
+    else:  # News
+        model_key = "BERT_News" if model_selected == "BERT" else "ROBERTA_News"
+        result_map = {0: "World", 1: "Sports", 2: "Business", 3: "Sci/Tech"}
 
+    model = models[model_key]
+    tokenizer = tokenizers[model_key]
+    model_name = model_key
 
-# 模型预测与结果展示
-if submit:
-    # 情感分析预测
-    if sentiment_input and sentiment_model_selected:
-        model = models["BERT_SentimentAnalysis"] if sentiment_model_selected == "BERT" else models["ROBERTA_SentimentAnalysis"]
-        tokenizer = tokenizers["BERT_SentimentAnalysis"] if sentiment_model_selected == "BERT" else tokenizers["ROBERTA_SentimentAnalysis"]
-        model_name = "BERT_SentimentAnalysis" if sentiment_model_selected == "BERT" else "ROBERTA_SentimentAnalysis"
+    # 预测
+    inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        predictions = torch.argmax(outputs.logits, dim=1).item()
 
-        inputs = tokenizer(sentiment_input, return_tensors="pt", truncation=True, padding=True)
-        with torch.no_grad():
-            outputs = model(**inputs)
-            predictions = torch.argmax(outputs.logits, dim=1).item()
+    # 显示结果
+    st.subheader("Prediction Result")
+    st.success(f"{model_selected} Prediction: {result_map[predictions]}")
 
-        st.subheader("Sentiment Analysis Prediction")
-        result_map = {0: "Negative", 1: "Positive"}  # 根据模型标签调整
-        st.success(f"{sentiment_model_selected} Prediction Results: {result_map[predictions]}")
-
-        # 混淆矩阵展示
-        st.subheader(f"{sentiment_model_selected} Confusion Matrix (Sentiment Analysis)")
-        conf_matrix_img = load_confusion_matrix(model_name)
-        st.image(conf_matrix_img, use_column_width=True)
-
-    # 新闻分类预测
-    elif news_input and news_model_selected:
-        model = models["BERT_News"] if news_model_selected == "BERT" else models["ROBERTA_News"]
-        tokenizer = tokenizers["BERT_News"] if news_model_selected == "BERT" else tokenizers["ROBERTA_News"]
-        model_name = "BERT_AGNews" if sentiment_model_selected == "BERT" else "ROBERTA_AGNews"
-
-        inputs = tokenizer(news_input, return_tensors="pt", truncation=True, padding=True)
-        with torch.no_grad():
-            outputs = model(**inputs)
-            predictions = torch.argmax(outputs.logits, dim=1).item()
-
-        st.subheader("News Topic Categorization Prediction")
-        topic_map = {0: "World", 1: "Sports", 2: "Business", 3: "Sci/Tech"}
-        st.success(f"{news_model_selected} Prediction Results: {topic_map[predictions]}")
-
-        # 混淆矩阵展示
-        st.subheader(f"{news_model_selected} Confusion Matrix (News Topic Categorization)")
-        conf_matrix_img = load_confusion_matrix(model_name)
-        st.image(conf_matrix_img, use_column_width=True)
-
+    # 显示混淆矩阵
+    st.subheader(f"{model_selected} Confusion Matrix")
+    conf_matrix_img = load_confusion_matrix(model_name)
+    st.image(conf_matrix_img, use_column_width=True)
 
 # # 2️⃣ 展示总体性能对比表格
 # metrics_file = "metrics/metrics.csv"
