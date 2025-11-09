@@ -3,53 +3,71 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from PIL import Image
 from peft import PeftModel
+import os
+import gdown
+import zipfile
+
 
 st.set_page_config(
     page_title="6405 Group 16 Project",
     layout="wide"
 )
-st.title("🤖6405 Group 16: Online Prediction Platform for BERT and its Variant Models")
+st.title("🤖 6405 Group 16: Online Prediction Platform for BERT and its Variant Models")
 st.write("Please select a model, enter text, and view the prediction results and the model's training performance metrics.")
 
 MODEL_PATHS = {
     "BERT_SentimentAnalysis": {"path": "model/bert_base_sentiment", "num_labels": 2, "adapter": True},
-    "ROBERTA_SentimentAnalysis": {"path": "model/roberta_base_sentiment", "num_labels": 2, "adapter": True},
-    "BERT_News": {"path": "model/bert_news", "num_labels": 4, "adapter": False},
+    "BERT_News": {
+        "path": "model/bert_news",
+        "num_labels": 4,
+        "adapter": False,
+        "gdrive_url": "https://drive.google.com/uc?id=1RgFH1aDaNaQkVC9MKZPq511NPpomNXNH"
+    }
 }
 
 @st.cache_resource
 def load_models():
     models = {}
     tokenizers = {}
-    for name, info in MODEL_PATHS.items():
-        path = info["path"]
-        num_labels = info["num_labels"]
-        use_adapter = info["adapter"]
 
-        if "BERT" in name and use_adapter:
+    for name, cfg in MODEL_PATHS.items():
+        path = cfg["path"]
+        num_labels = cfg["num_labels"]
+        use_adapter = cfg.get("adapter", False)
+
+        # 如果文件夹不存在或为空，自动下载并解压 zip
+        if not os.path.exists(path) or len(os.listdir(path)) == 0:
+            if "gdrive_url" in cfg:
+                os.makedirs(path, exist_ok=True)
+                zip_file = os.path.join(path, "model.zip")
+                gdown.download(cfg["gdrive_url"], zip_file, quiet=False)
+                with zipfile.ZipFile(zip_file, "r") as zip_ref:
+                    zip_ref.extractall(path)
+                os.remove(zip_file)
+
+        # 选择基础模型
+        if "BERT" in name:
             base_model_name = "bert-base-uncased"
-        elif "ROBERTA" in name and use_adapter:
+        elif "ROBERTA" in name:
             base_model_name = "facebook/roberta-base"
 
+        # 加载基础模型
+        base_model = AutoModelForSequenceClassification.from_pretrained(
+            base_model_name,
+            num_labels=num_labels
+        )
+
+        # 如果是 adapter 模型
         if use_adapter:
-            # 加载 Adapter 模型
-            base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=num_labels)
             model = PeftModel.from_pretrained(base_model, path, is_trainable=False)
         else:
-            # 加载完整微调模型
-            model = AutoModelForSequenceClassification.from_pretrained(path, num_labels=num_labels)
+            model = base_model
 
         model.eval()
         models[name] = model
-
-        # Tokenizer
-        if use_adapter:
-            tokenizers[name] = AutoTokenizer.from_pretrained(base_model_name)
-        else:
-            tokenizers[name] = AutoTokenizer.from_pretrained(path)
+        tokenizers[name] = AutoTokenizer.from_pretrained(base_model_name)
 
     return models, tokenizers, MODEL_PATHS
-
 
 # 加载混淆矩阵图片（PNG）
 def load_confusion_matrix(model_name):
