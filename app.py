@@ -36,6 +36,11 @@ MODEL_PATHS = {
         "num_labels": 4,
         "adapter": False,
         "gdrive_url": "https://drive.google.com/uc?id=1k65ZZY4M0GdArxztFeKslOBF3k69e54_"
+    },
+    "BERT_NLI":{
+        "path": "model/NLI",
+        "num_labels": 3,
+        "gdrive_url": "https://drive.google.com/drive/folders/1J8vuQuK_Gd36rbiQTAmpfCrwTCvUHoRk?usp=sharing"
     }
 }
 
@@ -70,6 +75,13 @@ def load_models():
             base_model_name,
             num_labels=num_labels
         )
+
+        # 大家用的方法似乎不太一样，等大家都补上自己的再看看需不需要重构了，这里先保证能跑就行~~QAQ~~ (BY XIE DEBIN
+        if path == "model/bert_nli":
+            path = os.path.join(path, "bert_nli")
+            models[name] = AutoModelForSequenceClassification.from_pretrained(path)
+            tokenizers[name] = AutoTokenizer.from_pretrained(path)
+            continue
 
         # 如果是 adapter 模型
         if use_adapter:
@@ -245,7 +257,7 @@ if submit:
         if os.path.exists(overall_img_path):
             overall_img = load_overall_performance(model_name)
             st.markdown("**Training Performance Metrics per Epoch:**")
-            st.image(overall_img, use_column_width=True)
+            st.image(overall_img, use_container_width=True)
 
     # 右列：分类报告
     with cols[1]:
@@ -253,7 +265,9 @@ if submit:
         if os.path.exists(categories_img_path):
             categories_img = load_categories_performance(model_name)
             st.markdown("**Classification Report:**")
-            st.image(categories_img, use_column_width=True)
+            st.image(categories_img, use_container_width=True)
+        else:
+            print("Not Find")
 
 
 
