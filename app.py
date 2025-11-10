@@ -40,7 +40,7 @@ MODEL_PATHS = {
     "BERT_NLI":{
         "path": "model/NLI",
         "num_labels": 3,
-        "gdrive_url": "https://drive.google.com/drive/folders/1J8vuQuK_Gd36rbiQTAmpfCrwTCvUHoRk?usp=sharing"
+        "gdrive_url": "https://drive.google.com/uc?id=1J8vuQuK_Gd36rbiQTAmpfCrwTCvUHoRk"
     }
 }
 
